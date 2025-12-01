@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: social-pulse-calculator
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: REDDIT_CLIENT_ID
+        sync: false
+      - key: REDDIT_CLIENT_SECRET
+        sync: false
+      - key: REDDIT_USER_AGENT
+        value: SocialPulse/1.0
+      - key: TWITTER_BEARER_TOKEN
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
