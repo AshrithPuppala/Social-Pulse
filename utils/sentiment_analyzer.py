@@ -1,79 +1,59 @@
-from transformers import pipeline
-import torch
+from textblob import TextBlob
+import re
 
 class SentimentAnalyzer:
     def __init__(self):
-        """Initialize sentiment analysis pipeline"""
+        # Download required NLTK data
         try:
-            # Use a smaller, faster model for sentiment analysis
-            self.analyzer = pipeline(
-                "sentiment-analysis",
-                model="distilbert-base-uncased-finetuned-sst-2-english",
-                device=-1  # Use CPU
-            )
-        except Exception as e:
-            print(f"Error loading sentiment model: {e}")
-            self.analyzer = None
+            import nltk
+            nltk.download('brown', quiet=True)
+            nltk.download('punkt', quiet=True)
+        except:
+            pass
+    
+    def clean_text(self, text):
+        # Remove URLs
+        text = re.sub(r'http\S+|www.\S+', '', text)
+        # Remove mentions and hashtags
+        text = re.sub(r'@\w+|#\w+', '', text)
+        # Remove extra whitespace
+        text = ' '.join(text.split())
+        return text
     
     def analyze(self, text):
-        """
-        Analyze sentiment of text
-        Returns: dict with 'label' (positive/negative/neutral) and 'score' (confidence)
-        """
-        if not self.analyzer:
-            # Fallback simple sentiment if model fails
-            return self._simple_sentiment(text)
-        
-        try:
-            # Clean and truncate text
-            text = text.strip()[:512]  # Limit to 512 chars for speed
-            
-            if not text or len(text) < 3:
-                return {'label': 'neutral', 'score': 0.5}
-            
-            # Get sentiment
-            result = self.analyzer(text)[0]
-            
-            # Convert to our format
-            label = result['label'].lower()
-            score = result['score']
-            
-            # Map LABEL to positive/negative
-            if label == 'positive':
-                sentiment_label = 'positive'
-            elif label == 'negative':
-                sentiment_label = 'negative'
-            else:
-                sentiment_label = 'neutral'
-            
-            # If confidence is low, mark as neutral
-            if score < 0.6:
-                sentiment_label = 'neutral'
-            
+        if not text or len(text.strip()) == 0:
             return {
-                'label': sentiment_label,
-                'score': score
+                'label': 'neutral',
+                'score': 0.0,
+                'polarity': 0.0,
+                'subjectivity': 0.0
             }
         
-        except Exception as e:
-            print(f"Sentiment analysis error: {e}")
-            return self._simple_sentiment(text)
-    
-    def _simple_sentiment(self, text):
-        """Simple fallback sentiment analysis using keyword matching"""
-        text_lower = text.lower()
+        # Clean the text
+        cleaned_text = self.clean_text(text)
         
-        positive_words = ['good', 'great', 'excellent', 'amazing', 'love', 'best', 'wonderful', 
-                         'fantastic', 'awesome', 'happy', 'perfect', 'beautiful', 'incredible']
-        negative_words = ['bad', 'terrible', 'awful', 'worst', 'hate', 'horrible', 'poor',
-                         'disappointing', 'sad', 'angry', 'useless', 'pathetic', 'disgusting']
+        # Analyze with TextBlob
+        blob = TextBlob(cleaned_text)
+        polarity = blob.sentiment.polarity
+        subjectivity = blob.sentiment.subjectivity
         
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
-        
-        if positive_count > negative_count:
-            return {'label': 'positive', 'score': 0.7}
-        elif negative_count > positive_count:
-            return {'label': 'negative', 'score': 0.7}
+        # Classify sentiment
+        if polarity > 0.1:
+            label = 'positive'
+            score = min(abs(polarity), 1.0)
+        elif polarity < -0.1:
+            label = 'negative'
+            score = min(abs(polarity), 1.0)
         else:
-            return {'label': 'neutral', 'score': 0.6}
+            label = 'neutral'
+            score = 1.0 - abs(polarity)
+        
+        return {
+            'label': label,
+            'score': round(score, 3),
+            'polarity': round(polarity, 3),
+            'subjectivity': round(subjectivity, 3)
+        }
+    
+    def batch_analyze(self, texts):
+        return [self.analyze(text) for text in texts]
