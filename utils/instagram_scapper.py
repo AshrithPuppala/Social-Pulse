@@ -89,4 +89,4 @@ class InstagramScraper:
             print(f"Instagram scraping error: {e}")
             raise Exception(f"Failed to scrape Instagram: {str(e)}")
         
-        return posts[:100]  # Return max 100 posts
+        return posts[:100]
