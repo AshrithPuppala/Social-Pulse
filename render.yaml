@@ -5,12 +5,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: REDDIT_CLIENT_ID
-        sync: false
-      - key: REDDIT_CLIENT_SECRET
-        sync: false
-      - key: REDDIT_USER_AGENT
-        value: SocialPulse/1.0
       - key: TWITTER_BEARER_TOKEN
         sync: false
       - key: RAPIDAPI_KEY
