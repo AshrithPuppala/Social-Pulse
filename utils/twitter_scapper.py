@@ -1,5 +1,5 @@
 import tweepy
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class TwitterScraper:
     def __init__(self, bearer_token):
