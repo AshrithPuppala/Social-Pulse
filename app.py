@@ -1,6 +1,5 @@
-from flask import Flask, request, redirect
+from flask import Flask, request
 import os
-from utils.reddit_scraper import RedditScraper
 from utils.twitter_scraper import TwitterScraper
 from utils.instagram_scraper import InstagramScraper
 from utils.sentiment_analyzer import SentimentAnalyzer
@@ -11,13 +10,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
-# Initialize scrapers
-reddit_scraper = RedditScraper(
-    client_id=os.environ.get('REDDIT_CLIENT_ID'),
-    client_secret=os.environ.get('REDDIT_CLIENT_SECRET'),
-    user_agent=os.environ.get('REDDIT_USER_AGENT', 'SocialPulse/1.0')
-)
-
+# Initialize scrapers (NO REDDIT)
 twitter_scraper = TwitterScraper(
     bearer_token=os.environ.get('TWITTER_BEARER_TOKEN')
 )
@@ -31,8 +24,6 @@ sentiment_analyzer = SentimentAnalyzer()
 def get_available_platforms():
     """Get list of configured platforms"""
     platforms = []
-    if reddit_scraper.is_configured():
-        platforms.append('reddit')
     if twitter_scraper.is_configured():
         platforms.append('twitter')
     if instagram_scraper.is_configured():
@@ -87,11 +78,8 @@ def analyze():
         }
         
         # Scrape data from selected platforms in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             futures = {}
-            
-            if 'reddit' in platforms and reddit_scraper.is_configured():
-                futures['reddit'] = executor.submit(reddit_scraper.scrape, topic)
             
             if 'twitter' in platforms and twitter_scraper.is_configured():
                 futures['twitter'] = executor.submit(twitter_scraper.scrape, topic)
