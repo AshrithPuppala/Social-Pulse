@@ -321,7 +321,7 @@ def generate_form(available_platforms, topic):
     topic_value = escape_html(topic) if topic else ''
     
     platform_checkboxes = []
-    for platform in ['twitter', 'instagram', 'reddit']:
+    for platform in ['twitter', 'instagram']:
         display_name = 'Twitter / X' if platform == 'twitter' else platform.capitalize()
         checked = 'checked' if platform in available_platforms else ''
         disabled = '' if platform in available_platforms else 'disabled'
