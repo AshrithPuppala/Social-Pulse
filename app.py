@@ -2,6 +2,7 @@ from flask import Flask, request
 import os
 from utils.twitter_scraper import TwitterScraper
 from utils.instagram_scraper import InstagramScraper
+from utils.news_scraper import NewsScraper
 from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.html_generator import generate_html_page
 import concurrent.futures
@@ -10,13 +11,17 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
-# Initialize scrapers (NO REDDIT)
+# Initialize scrapers
 twitter_scraper = TwitterScraper(
     bearer_token=os.environ.get('TWITTER_BEARER_TOKEN')
 )
 
 instagram_scraper = InstagramScraper(
     rapidapi_key=os.environ.get('RAPIDAPI_KEY')
+)
+
+news_scraper = NewsScraper(
+    api_key=os.environ.get('NEWS_API_KEY')
 )
 
 sentiment_analyzer = SentimentAnalyzer()
@@ -28,6 +33,8 @@ def get_available_platforms():
         platforms.append('twitter')
     if instagram_scraper.is_configured():
         platforms.append('instagram')
+    if news_scraper.is_configured():
+        platforms.append('news')
     return platforms
 
 @app.route('/')
@@ -78,7 +85,7 @@ def analyze():
         }
         
         # Scrape data from selected platforms in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = {}
             
             if 'twitter' in platforms and twitter_scraper.is_configured():
@@ -86,6 +93,9 @@ def analyze():
             
             if 'instagram' in platforms and instagram_scraper.is_configured():
                 futures['instagram'] = executor.submit(instagram_scraper.scrape, topic)
+            
+            if 'news' in platforms and news_scraper.is_configured():
+                futures['news'] = executor.submit(news_scraper.scrape, topic)
             
             # Collect results
             for platform, future in futures.items():
