@@ -15,82 +15,92 @@ news_scraper = NewsScraper(
 
 sentiment_analyzer = SentimentAnalyzer()
 
-# Credible news sources - major established outlets
+# More balanced credible sources list
 CREDIBLE_SOURCES = {
-    # International News
-    'BBC News', 'Reuters', 'The Associated Press', 'The New York Times', 'The Washington Post',
-    'The Guardian', 'CNN', 'Al Jazeera English', 'Financial Times', 'Bloomberg',
-    'The Wall Street Journal', 'NPR', 'PBS NewsHour', 'The Economist', 'TIME',
-    'Politico', 'The Atlantic', 'Foreign Policy', 'The Independent',
+    # Major International News
+    'BBC News', 'Reuters', 'The Associated Press', 'Associated Press', 'AP News',
+    'The New York Times', 'The Washington Post', 'The Guardian', 'CNN', 'Al Jazeera English',
+    'Financial Times', 'Bloomberg', 'The Wall Street Journal', 'NPR', 'ABC News',
+    'CBS News', 'NBC News', 'PBS', 'TIME', 'Politico', 'The Atlantic', 'The Economist',
     
     # Indian News
     'The Times of India', 'The Hindu', 'Hindustan Times', 'Indian Express',
     'NDTV', 'The Economic Times', 'Business Standard', 'Mint', 'ThePrint',
-    'The Wire', 'Scroll.in', 'News18', 'India Today', 'First Post',
+    'The Wire', 'Scroll.in', 'News18', 'India Today', 'FirstPost',
     
-    # Tech & Business
+    # Tech & Business  
     'TechCrunch', 'Ars Technica', 'The Verge', 'Wired', 'Forbes',
-    'Business Insider', 'CNBC', 'MarketWatch', 'Fortune',
+    'Business Insider', 'CNBC', 'MarketWatch', 'Fortune', 'Fast Company',
+    'VentureBeat', 'Engadget', 'ZDNet', 'CNET', 'TechRadar', 'The Next Web',
     
-    # Science & Health
-    'Nature', 'Science Magazine', 'New Scientist', 'Scientific American',
-    'National Geographic', 'Smithsonian Magazine'
+    # Science & Specialized
+    'Nature', 'Science', 'New Scientist', 'Scientific American',
+    'National Geographic', 'Smithsonian', 'Live Science', 'Space.com',
+    
+    # Sports
+    'ESPN', 'Sports Illustrated', 'The Athletic', 'Sky Sports', 'BBC Sport',
+    
+    # Entertainment & Culture
+    'Variety', 'The Hollywood Reporter', 'Entertainment Weekly', 'Rolling Stone',
+    'Billboard', 'Pitchfork', 'IGN', 'GameSpot', 'Polygon'
 }
 
 def is_credible_source(source_name):
-    """Check if a source is in our credible list"""
+    """Check if a source is credible"""
     if not source_name:
         return False
     
-    source_lower = source_name.lower()
+    source_lower = source_name.lower().strip()
     
-    # Check exact matches (case insensitive)
+    # Check for exact or partial matches
     for credible in CREDIBLE_SOURCES:
-        if credible.lower() == source_lower:
+        credible_lower = credible.lower()
+        if credible_lower == source_lower:
             return True
-        # Also check if credible source is contained in the name
-        if credible.lower() in source_lower or source_lower in credible.lower():
+        if credible_lower in source_lower or source_lower in credible_lower:
             return True
+    
+    # Allow sources with .com, .org, .net extensions (common for news sites)
+    # but exclude obvious spam/low quality domains
+    spam_indicators = ['blog', 'wordpress', 'medium.com', 'tumblr', 'facebook', 'twitter']
+    if any(indicator in source_lower for indicator in spam_indicators):
+        return False
     
     return False
 
-def filter_credible_articles(articles):
-    """Filter articles to only include credible sources"""
-    credible_articles = []
-    filtered_out = []
+def check_relevance(article, topic):
+    """Check if article is relevant to the topic"""
+    topic_lower = topic.lower()
+    text_lower = article.get('text', '').lower()
+    title_lower = article.get('title', '').lower()
     
-    for article in articles:
-        source = article.get('source', 'Unknown')
-        if is_credible_source(source):
-            credible_articles.append(article)
-        else:
-            filtered_out.append(source)
+    # Topic keywords
+    topic_words = set(topic_lower.split())
     
-    return credible_articles, filtered_out
+    # Count how many topic words appear in title or text
+    matches_in_title = sum(1 for word in topic_words if len(word) > 2 and word in title_lower)
+    matches_in_text = sum(1 for word in topic_words if len(word) > 2 and word in text_lower)
+    
+    # Article is relevant if topic words appear in title or multiple times in text
+    if matches_in_title > 0 or matches_in_text >= 2:
+        return True
+    
+    # Also check for full topic phrase
+    if topic_lower in title_lower or topic_lower in text_lower:
+        return True
+    
+    return False
 
 def validate_article_quality(article):
     """Validate that article has meaningful content"""
     text = article.get('text', '')
     
-    # Filter out articles with insufficient content
-    if len(text) < 50:
+    # Minimum length check
+    if len(text) < 30:
         return False
     
-    # Filter out articles that are just headlines without description
-    if '. ' not in text and len(text) < 100:
-        return False
-    
-    # Filter out common spam patterns
-    spam_patterns = [
-        'click here', 'subscribe now', 'sign up', 'download app',
-        'watch video', 'see more', 'read full story here'
-    ]
-    
-    text_lower = text.lower()
-    spam_count = sum(1 for pattern in spam_patterns if pattern in text_lower)
-    
-    # If article is mostly spam/promotional content
-    if spam_count > 2:
+    # Must have some sentence structure
+    if '. ' not in text and len(text) < 80:
         return False
     
     return True
@@ -144,25 +154,36 @@ def analyze():
         if not all_articles:
             html = generate_html_page(
                 is_configured=news_scraper.is_configured(),
-                error=f'No news articles found for "{topic}". Try a different topic or broader search terms.',
+                error=f'No news articles found for "{topic}". Try different keywords or a broader topic.',
                 results=None,
                 topic=topic
             )
             return html
         
-        # Filter for credible sources only
-        credible_articles, filtered_sources = filter_credible_articles(all_articles)
+        # Filter for quality and relevance
+        quality_articles = []
+        for article in all_articles:
+            # Check quality first
+            if not validate_article_quality(article):
+                continue
+            
+            # Check relevance to topic
+            if not check_relevance(article, topic):
+                continue
+            
+            # Check if source is credible (more lenient now)
+            if is_credible_source(article.get('source', '')):
+                quality_articles.append(article)
         
-        # Validate article quality
-        quality_articles = [a for a in credible_articles if validate_article_quality(a)]
+        # If credible filter is too strict, fall back to all relevant articles
+        if len(quality_articles) < 5:
+            quality_articles = [a for a in all_articles 
+                              if validate_article_quality(a) and check_relevance(a, topic)]
         
         if not quality_articles:
-            error_msg = f'No credible news articles found for "{topic}". '
-            if filtered_sources:
-                error_msg += 'Try a more mainstream topic covered by major news outlets.'
             html = generate_html_page(
                 is_configured=news_scraper.is_configured(),
-                error=error_msg,
+                error=f'No relevant news articles found for "{topic}". Try using different keywords or a more specific/general topic.',
                 results=None,
                 topic=topic
             )
@@ -205,7 +226,7 @@ def analyze():
             'neutral_percentage': round((neutral_count / total * 100) if total > 0 else 0, 2)
         }
         
-        # Get extreme examples (only from quality articles)
+        # Get extreme examples
         positive_articles = [a for a in analyzed_articles if a['sentiment'] == 'positive']
         negative_articles = [a for a in analyzed_articles if a['sentiment'] == 'negative']
         
@@ -223,7 +244,6 @@ def analyze():
             source = article.get('source', 'Unknown')
             source_counts[source] = source_counts.get(source, 0) + 1
         
-        # Sort sources by count
         top_sources = sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         results['top_sources'] = top_sources
         
