@@ -1,47 +1,25 @@
 from flask import Flask, request
 import os
-from utils.twitter_scraper import TwitterScraper
-from utils.instagram_scraper import InstagramScraper
 from utils.news_scraper import NewsScraper
 from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.html_generator import generate_html_page
-import concurrent.futures
 from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
-# Initialize scrapers
-twitter_scraper = TwitterScraper(
-    bearer_token=os.environ.get('TWITTER_BEARER_TOKEN')
-)
-
-instagram_scraper = InstagramScraper(
-    rapidapi_key=os.environ.get('RAPIDAPI_KEY')
-)
-
+# Initialize scraper and analyzer
 news_scraper = NewsScraper(
     api_key=os.environ.get('NEWS_API_KEY')
 )
 
 sentiment_analyzer = SentimentAnalyzer()
 
-def get_available_platforms():
-    """Get list of configured platforms"""
-    platforms = []
-    if twitter_scraper.is_configured():
-        platforms.append('twitter')
-    if instagram_scraper.is_configured():
-        platforms.append('instagram')
-    if news_scraper.is_configured():
-        platforms.append('news')
-    return platforms
-
 @app.route('/')
 def index():
-    available_platforms = get_available_platforms()
+    is_configured = news_scraper.is_configured()
     html = generate_html_page(
-        available_platforms=available_platforms,
+        is_configured=is_configured,
         results=None,
         error=None,
         topic=None
@@ -52,137 +30,105 @@ def index():
 def analyze():
     try:
         topic = request.form.get('topic', '').strip()
-        platforms = request.form.getlist('platforms')
         
         if not topic:
             html = generate_html_page(
-                available_platforms=get_available_platforms(),
-                error='Please enter a topic',
+                is_configured=news_scraper.is_configured(),
+                error='Please enter a topic to analyze',
                 results=None,
                 topic=topic
             )
             return html
         
-        if not platforms:
+        if not news_scraper.is_configured():
             html = generate_html_page(
-                available_platforms=get_available_platforms(),
-                error='Please select at least one platform',
+                is_configured=False,
+                error='News API is not configured. Please add your NEWS_API_KEY to environment variables.',
                 results=None,
                 topic=topic
             )
             return html
         
+        # Scrape news articles
+        try:
+            articles = news_scraper.scrape(topic, limit=100)
+        except Exception as e:
+            html = generate_html_page(
+                is_configured=news_scraper.is_configured(),
+                error=str(e),
+                results=None,
+                topic=topic
+            )
+            return html
+        
+        if not articles:
+            html = generate_html_page(
+                is_configured=news_scraper.is_configured(),
+                error=f'No news articles found for "{topic}". Try a different topic or broader search terms.',
+                results=None,
+                topic=topic
+            )
+            return html
+        
+        # Analyze sentiment for each article
+        analyzed_articles = []
+        positive_count = 0
+        negative_count = 0
+        neutral_count = 0
+        
+        for article in articles:
+            sentiment = sentiment_analyzer.analyze(article['text'])
+            article['sentiment'] = sentiment['label']
+            article['confidence'] = sentiment['score']
+            analyzed_articles.append(article)
+            
+            if sentiment['label'] == 'positive':
+                positive_count += 1
+            elif sentiment['label'] == 'negative':
+                negative_count += 1
+            else:
+                neutral_count += 1
+        
+        total = len(analyzed_articles)
+        
+        # Prepare results
         results = {
             'topic': topic,
             'timestamp': datetime.now().isoformat(),
-            'platforms': {},
-            'overall': {
-                'positive_count': 0,
-                'negative_count': 0,
-                'neutral_count': 0,
-                'total_posts': 0
-            }
+            'articles': analyzed_articles[:100],  # Limit display to 100
+            'total_articles': total,
+            'positive_count': positive_count,
+            'negative_count': negative_count,
+            'neutral_count': neutral_count,
+            'positive_percentage': round((positive_count / total * 100) if total > 0 else 0, 2),
+            'negative_percentage': round((negative_count / total * 100) if total > 0 else 0, 2),
+            'neutral_percentage': round((neutral_count / total * 100) if total > 0 else 0, 2)
         }
-        
-        # Scrape data from selected platforms in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {}
-            
-            if 'twitter' in platforms and twitter_scraper.is_configured():
-                futures['twitter'] = executor.submit(twitter_scraper.scrape, topic)
-            
-            if 'instagram' in platforms and instagram_scraper.is_configured():
-                futures['instagram'] = executor.submit(instagram_scraper.scrape, topic)
-            
-            if 'news' in platforms and news_scraper.is_configured():
-                futures['news'] = executor.submit(news_scraper.scrape, topic)
-            
-            # Collect results
-            for platform, future in futures.items():
-                try:
-                    posts = future.result(timeout=30)
-                    
-                    # Analyze sentiment for each post
-                    analyzed_posts = []
-                    positive_count = 0
-                    negative_count = 0
-                    neutral_count = 0
-                    
-                    for post in posts:
-                        sentiment = sentiment_analyzer.analyze(post['text'])
-                        post['sentiment'] = sentiment['label']
-                        post['confidence'] = sentiment['score']
-                        analyzed_posts.append(post)
-                        
-                        if sentiment['label'] == 'positive':
-                            positive_count += 1
-                        elif sentiment['label'] == 'negative':
-                            negative_count += 1
-                        else:
-                            neutral_count += 1
-                    
-                    total = len(analyzed_posts)
-                    
-                    results['platforms'][platform] = {
-                        'posts': analyzed_posts[:50],
-                        'total_posts': total,
-                        'positive_count': positive_count,
-                        'negative_count': negative_count,
-                        'neutral_count': neutral_count,
-                        'positive_percentage': round((positive_count / total * 100) if total > 0 else 0, 2),
-                        'negative_percentage': round((negative_count / total * 100) if total > 0 else 0, 2),
-                        'neutral_percentage': round((neutral_count / total * 100) if total > 0 else 0, 2)
-                    }
-                    
-                    # Update overall stats
-                    results['overall']['positive_count'] += positive_count
-                    results['overall']['negative_count'] += negative_count
-                    results['overall']['neutral_count'] += neutral_count
-                    results['overall']['total_posts'] += total
-                    
-                except Exception as e:
-                    results['platforms'][platform] = {
-                        'error': str(e),
-                        'total_posts': 0
-                    }
-        
-        # Calculate overall percentages
-        total = results['overall']['total_posts']
-        if total > 0:
-            results['overall']['positive_percentage'] = round(
-                (results['overall']['positive_count'] / total * 100), 2
-            )
-            results['overall']['negative_percentage'] = round(
-                (results['overall']['negative_count'] / total * 100), 2
-            )
-            results['overall']['neutral_percentage'] = round(
-                (results['overall']['neutral_count'] / total * 100), 2
-            )
-        else:
-            results['overall']['positive_percentage'] = 0
-            results['overall']['negative_percentage'] = 0
-            results['overall']['neutral_percentage'] = 0
         
         # Get extreme examples
-        all_posts = []
-        for platform_data in results['platforms'].values():
-            if 'posts' in platform_data:
-                all_posts.extend(platform_data['posts'])
+        positive_articles = [a for a in analyzed_articles if a['sentiment'] == 'positive']
+        negative_articles = [a for a in analyzed_articles if a['sentiment'] == 'negative']
         
-        # Sort by confidence and get extreme examples
-        positive_posts = [p for p in all_posts if p['sentiment'] == 'positive']
-        negative_posts = [p for p in all_posts if p['sentiment'] == 'negative']
-        
-        positive_posts.sort(key=lambda x: x['confidence'], reverse=True)
-        negative_posts.sort(key=lambda x: x['confidence'], reverse=True)
+        positive_articles.sort(key=lambda x: x['confidence'], reverse=True)
+        negative_articles.sort(key=lambda x: x['confidence'], reverse=True)
         
         results['extreme_examples'] = {
-            'most_positive': positive_posts[:5],
-            'most_negative': negative_posts[:5]
+            'most_positive': positive_articles[:5],
+            'most_negative': negative_articles[:5]
         }
         
+        # Get source distribution
+        source_counts = {}
+        for article in analyzed_articles:
+            source = article.get('source', 'Unknown')
+            source_counts[source] = source_counts.get(source, 0) + 1
+        
+        # Sort sources by count
+        top_sources = sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        results['top_sources'] = top_sources
+        
         html = generate_html_page(
-            available_platforms=get_available_platforms(),
+            is_configured=news_scraper.is_configured(),
             results=results,
             error=None,
             topic=topic
@@ -191,7 +137,7 @@ def analyze():
         
     except Exception as e:
         html = generate_html_page(
-            available_platforms=get_available_platforms(),
+            is_configured=news_scraper.is_configured(),
             error=f'Analysis failed: {str(e)}',
             results=None,
             topic=request.form.get('topic', '')
@@ -200,10 +146,9 @@ def analyze():
 
 @app.route('/health')
 def health():
-    available = get_available_platforms()
     return {
         'status': 'healthy',
-        'available_platforms': available
+        'news_api_configured': news_scraper.is_configured()
     }
 
 if __name__ == '__main__':
