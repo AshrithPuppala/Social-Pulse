@@ -54,7 +54,7 @@ def generate_css():
         .input-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         input[type="text"] {
@@ -79,6 +79,7 @@ def generate_css():
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         button:hover {
@@ -86,37 +87,22 @@ def generate_css():
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .platform-selection {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .platform-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .platform-checkbox input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .platform-status {
+        .info-box {
             margin-top: 15px;
             padding: 12px;
             border-radius: 8px;
-        }
-
-        .info {
             background: #d1ecf1;
             color: #0c5460;
             border-left: 4px solid #17a2b8;
+        }
+
+        .warning-box {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
         }
 
         .results {
@@ -179,53 +165,74 @@ def generate_css():
 
         .bar-positive {
             background: #38ef7d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .bar-negative {
             background: #f45c43;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .bar-neutral {
             background: #00f2fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
         }
 
-        .platform-result {
+        .sources-section {
             margin-top: 30px;
             padding: 20px;
             background: #f8f9fa;
             border-radius: 10px;
         }
 
-        .platform-result h3 {
+        .sources-section h3 {
             margin-bottom: 15px;
             color: #667eea;
-            font-size: 1.5rem;
         }
 
-        .platform-stats {
+        .source-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
         }
 
-        .platform-stat {
+        .source-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
             background: white;
-            padding: 15px;
             border-radius: 8px;
-            text-align: center;
+            border-left: 3px solid #667eea;
         }
 
-        .platform-stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #667eea;
+        .source-name {
+            font-weight: 500;
+            color: #333;
         }
 
-        .platform-stat-label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
+        .source-count {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
         .extreme-examples {
@@ -238,53 +245,77 @@ def generate_css():
         .extreme-section h3 {
             margin-bottom: 15px;
             font-size: 1.3rem;
+            color: #333;
         }
 
-        .post-card {
-            background: #f8f9fa;
-            padding: 15px;
+        .article-card {
+            background: white;
+            padding: 20px;
             border-radius: 10px;
             margin-bottom: 15px;
             border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
         }
 
-        .post-card.positive {
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .article-card.positive {
             border-left-color: #38ef7d;
         }
 
-        .post-card.negative {
+        .article-card.negative {
             border-left-color: #f45c43;
         }
 
-        .post-text {
+        .article-title {
+            font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 10px;
-            line-height: 1.6;
+            color: #333;
+            line-height: 1.4;
         }
 
-        .post-meta {
+        .article-text {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .article-meta {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.85rem;
             color: #666;
             flex-wrap: wrap;
             gap: 10px;
         }
 
-        .post-author {
+        .article-source {
             font-weight: 600;
+            color: #667eea;
         }
 
-        .post-platform {
-            background: #667eea;
+        .article-confidence {
+            background: #38ef7d;
             color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
         }
 
-        .post-confidence {
-            color: #38ef7d;
-            font-weight: 600;
+        .article-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .article-link:hover {
+            text-decoration: underline;
         }
 
         .error {
@@ -294,6 +325,7 @@ def generate_css():
             border-radius: 10px;
             margin-top: 20px;
             text-align: center;
+            font-size: 1.1rem;
         }
 
         @media (max-width: 768px) {
@@ -308,44 +340,30 @@ def generate_css():
             .input-group {
                 flex-direction: column;
             }
-            
-            .platform-selection {
-                flex-direction: column;
-                align-items: flex-start;
+
+            .source-list {
+                grid-template-columns: 1fr;
             }
         }
     """
 
-def generate_form(available_platforms, topic):
+def generate_form(is_configured, topic):
     """Generate form HTML using Python"""
     topic_value = escape_html(topic) if topic else ''
     
-    platform_checkboxes = []
-    for platform in ['twitter', 'instagram', 'news']:
-        if platform == 'twitter':
-            display_name = 'Twitter / X'
-        elif platform == 'news':
-            display_name = 'News Articles'
-        else:
-            display_name = platform.capitalize()
-            
-        checked = 'checked' if platform in available_platforms else ''
-        disabled = '' if platform in available_platforms else 'disabled'
-        
-        checkbox_html = f'''
-            <label class="platform-checkbox">
-                <input type="checkbox" name="platforms" value="{platform}" {checked} {disabled}>
-                <span>{display_name}</span>
-            </label>
+    status_html = ''
+    if is_configured:
+        status_html = '''
+            <div class="info-box">
+                ✓ News API is configured and ready to analyze news articles
+            </div>
         '''
-        platform_checkboxes.append(checkbox_html)
-    
-    platform_status = ''
-    if available_platforms:
-        platforms_list = ', '.join([p.capitalize() for p in available_platforms])
-        platform_status = f'''
-            <div class="platform-status info">
-                ✓ Available platforms: {platforms_list}
+    else:
+        status_html = '''
+            <div class="warning-box">
+                ⚠️ News API is not configured. Please set your NEWS_API_KEY environment variable.
+                <br><br>
+                Get your free API key at: <a href="https://newsapi.org" target="_blank" style="color: #856404; font-weight: bold;">newsapi.org</a>
             </div>
         '''
     
@@ -356,18 +374,13 @@ def generate_form(available_platforms, topic):
                     <input 
                         type="text" 
                         name="topic"
-                        placeholder="Enter a topic (e.g., climate change, AI, bitcoin)"
+                        placeholder="Enter a topic to analyze (e.g., climate change, artificial intelligence, cryptocurrency)"
                         required
                         value="{topic_value}"
                     >
-                    <button type="submit">Analyze</button>
+                    <button type="submit">Analyze News</button>
                 </div>
-                
-                <div class="platform-selection">
-                    {"".join(platform_checkboxes)}
-                </div>
-
-                {platform_status}
+                {status_html}
             </form>
         </div>
     '''
@@ -378,89 +391,80 @@ def generate_results_html(results, topic):
     if not results:
         return ''
     
-    overall = results['overall']
-    
     # Overall stats cards
     stats_html = f'''
         <div class="results">
             <div class="overall-stats">
-                <h2>Overall Sentiment for "{escape_html(topic)}"</h2>
+                <h2>News Sentiment Analysis for "{escape_html(topic)}"</h2>
+                <p style="color: #666; margin-bottom: 20px;">Analyzed {results['total_articles']} news articles</p>
+                
                 <div class="stats-grid">
                     <div class="stat-card positive">
-                        <div class="stat-value">{overall['positive_percentage']:.1f}%</div>
-                        <div class="stat-label">Positive</div>
+                        <div class="stat-value">{results['positive_percentage']:.1f}%</div>
+                        <div class="stat-label">Positive Coverage</div>
                     </div>
                     <div class="stat-card negative">
-                        <div class="stat-value">{overall['negative_percentage']:.1f}%</div>
-                        <div class="stat-label">Negative</div>
+                        <div class="stat-value">{results['negative_percentage']:.1f}%</div>
+                        <div class="stat-label">Negative Coverage</div>
                     </div>
                     <div class="stat-card neutral">
-                        <div class="stat-value">{overall['neutral_percentage']:.1f}%</div>
-                        <div class="stat-label">Neutral</div>
+                        <div class="stat-value">{results['neutral_percentage']:.1f}%</div>
+                        <div class="stat-label">Neutral Coverage</div>
                     </div>
                     <div class="stat-card total">
-                        <div class="stat-value">{overall['total_posts']}</div>
-                        <div class="stat-label">Total Posts</div>
+                        <div class="stat-value">{results['total_articles']}</div>
+                        <div class="stat-label">Total Articles</div>
                     </div>
                 </div>
                 
                 <div class="sentiment-bar">
-                    <div class="bar-positive" style="width: {overall['positive_percentage']}%"></div>
-                    <div class="bar-negative" style="width: {overall['negative_percentage']}%"></div>
-                    <div class="bar-neutral" style="width: {overall['neutral_percentage']}%"></div>
+                    <div class="bar-positive" style="width: {results['positive_percentage']}%">
+                        {results['positive_percentage']:.0f}%
+                    </div>
+                    <div class="bar-negative" style="width: {results['negative_percentage']}%">
+                        {results['negative_percentage']:.0f}%
+                    </div>
+                    <div class="bar-neutral" style="width: {results['neutral_percentage']}%">
+                        {results['neutral_percentage']:.0f}%
+                    </div>
                 </div>
             </div>
     '''
     
-    # Platform-specific results
-    for platform, data in results['platforms'].items():
-        platform_name = platform.capitalize()
+    # Top sources section
+    if results.get('top_sources'):
+        stats_html += '''
+            <div class="sources-section">
+                <h3>📰 Top News Sources</h3>
+                <div class="source-list">
+        '''
         
-        if 'error' in data:
+        for source, count in results['top_sources']:
             stats_html += f'''
-                <div class="platform-result">
-                    <h3>{platform_name}</h3>
-                    <p style="color: #f45c43;">Error: {escape_html(data['error'])}</p>
+                <div class="source-item">
+                    <span class="source-name">{escape_html(source)}</span>
+                    <span class="source-count">{count}</span>
                 </div>
             '''
-        else:
-            stats_html += f'''
-                <div class="platform-result">
-                    <h3>{platform_name}</h3>
-                    <div class="platform-stats">
-                        <div class="platform-stat">
-                            <div class="platform-stat-value">{data['positive_percentage']:.1f}%</div>
-                            <div class="platform-stat-label">Positive</div>
-                        </div>
-                        <div class="platform-stat">
-                            <div class="platform-stat-value">{data['negative_percentage']:.1f}%</div>
-                            <div class="platform-stat-label">Negative</div>
-                        </div>
-                        <div class="platform-stat">
-                            <div class="platform-stat-value">{data['neutral_percentage']:.1f}%</div>
-                            <div class="platform-stat-label">Neutral</div>
-                        </div>
-                        <div class="platform-stat">
-                            <div class="platform-stat-value">{data['total_posts']}</div>
-                            <div class="platform-stat-label">Total Posts</div>
-                        </div>
-                    </div>
+        
+        stats_html += '''
                 </div>
-            '''
+            </div>
+        '''
     
     # Extreme examples
-    positive_posts_html = generate_posts_html(results['extreme_examples']['most_positive'], 'positive')
-    negative_posts_html = generate_posts_html(results['extreme_examples']['most_negative'], 'negative')
+    positive_articles_html = generate_articles_html(results['extreme_examples']['most_positive'], 'positive')
+    negative_articles_html = generate_articles_html(results['extreme_examples']['most_negative'], 'negative')
     
     stats_html += f'''
             <div class="extreme-examples">
                 <div class="extreme-section">
-                    <h3>🌟 Most Positive Opinions</h3>
-                    {positive_posts_html}
+                    <h3>🌟 Most Positive Coverage</h3>
+                    {positive_articles_html}
                 </div>
                 <div class="extreme-section">
-                    <h3>⚠️ Most Negative Opinions</h3>
-                    {negative_posts_html}
+                    <h3>⚠️ Most Negative Coverage</h3>
+                    {negative_articles_html}
                 </div>
             </div>
         </div>
@@ -468,52 +472,64 @@ def generate_results_html(results, topic):
     
     return stats_html
 
-def generate_posts_html(posts, sentiment_type):
-    """Generate HTML for posts list"""
-    if not posts:
-        return '<p style="color: #666;">No posts found</p>'
+def generate_articles_html(articles, sentiment_type):
+    """Generate HTML for articles list"""
+    if not articles:
+        return '<p style="color: #666;">No articles found</p>'
     
-    posts_html = []
-    for post in posts:
-        text = post['text']
-        truncated_text = text[:200] + '...' if len(text) > 200 else text
-        confidence = post['confidence'] * 100
+    articles_html = []
+    for article in articles:
+        text = article['text']
         
-        post_html = f'''
-            <div class="post-card {escape_html(sentiment_type)}">
-                <div class="post-text">{escape_html(truncated_text)}</div>
-                <div class="post-meta">
-                    <span class="post-author">@{escape_html(post['author'])}</span>
-                    <span class="post-platform">{escape_html(post['platform'])}</span>
-                    <span class="post-confidence">Confidence: {confidence:.1f}%</span>
+        # Split title and description
+        parts = text.split('. ', 1)
+        title = parts[0]
+        description = parts[1] if len(parts) > 1 else ''
+        
+        # Truncate description
+        if len(description) > 150:
+            description = description[:150] + '...'
+        
+        confidence = article['confidence'] * 100
+        source = article.get('source', 'Unknown')
+        url = article.get('url', '')
+        
+        article_html = f'''
+            <div class="article-card {escape_html(sentiment_type)}">
+                <div class="article-title">{escape_html(title)}</div>
+                {f'<div class="article-text">{escape_html(description)}</div>' if description else ''}
+                <div class="article-meta">
+                    <span class="article-source">{escape_html(source)}</span>
+                    <span class="article-confidence">Confidence: {confidence:.0f}%</span>
+                    {f'<a href="{escape_html(url)}" target="_blank" class="article-link">Read More →</a>' if url else ''}
                 </div>
             </div>
         '''
-        posts_html.append(post_html)
+        articles_html.append(article_html)
     
-    return ''.join(posts_html)
+    return ''.join(articles_html)
 
-def generate_html_page(available_platforms, results, error, topic):
+def generate_html_page(is_configured, results, error, topic):
     """Main function to generate complete HTML page using only Python"""
     
     css = generate_css()
-    form_html = generate_form(available_platforms, topic)
+    form_html = generate_form(is_configured, topic)
     results_html = generate_results_html(results, topic) if results else ''
-    error_html = f'<div class="error">{escape_html(error)}</div>' if error else ''
+    error_html = f'<div class="error">❌ {escape_html(error)}</div>' if error else ''
     
     full_html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Pulse Calculator</title>
+    <title>News Sentiment Analyzer</title>
     <style>{css}</style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📊 Social Pulse Calculator</h1>
-            <p class="subtitle">Real-time sentiment analysis across social media platforms</p>
+            <h1>📰 News Sentiment Analyzer</h1>
+            <p class="subtitle">Real-time sentiment analysis of global news coverage</p>
         </header>
 
         {form_html}
